@@ -147,8 +147,9 @@ http_send_request(http_t *http, int socket, const char *host, const char *file, 
     }
   strcat( http->buff, "Connection: close\r\n\r\n" );
 
-//printf("header: %s\n", http_buff);
-
+#ifdef DEBUG
+  printf("header: %s\n", http_buff);
+#endif
   return ws_socket_send( socket, http->buff, strlen(http->buff), 0 );
 }
 
@@ -221,7 +222,6 @@ http_read_response(http_t *http, int socket, const http_event_procs_t *event_pro
   int block_length = 0;
   char stream_eof = 0;
 
-#if 1
   while( sizeof(http->buff) - pos > 0 && (len = ws_socket_recv( socket, http->buff + pos, sizeof(http->buff) - pos, 0 )) )
     {
       if( len <= 0 ) break;
@@ -231,7 +231,9 @@ http_read_response(http_t *http, int socket, const http_event_procs_t *event_pro
   if(!pos) return -WERR_TCP_RECV;
   
   while(isspace(*response)) response++;
-// printf("response: %s\n", response);
+#ifdef DEBUG
+  printf("response: %s\n", response);
+#endif
   if( 0 != strncmp(response, "HTTP/1.1", sizeof("HTTP/1.1")-1) )
     return -WERR_HTTP_HEADER;
   response += 8;
@@ -283,35 +285,17 @@ http_read_response(http_t *http, int socket, const http_event_procs_t *event_pro
 
   len = sizeof(http->buff) - (int)(body - http->buff);
   memmove(http->buff, body, len);
-#else
 
-  http->write_pos = 0;
-  http->content_lenght = 0;
-  http->chunked = 1;
-  http->chunked_size = 0;
-  smcode = SMCODE_CHUNK_SIZE;
-  
-  FILE *fp = fopen("./test.txt", "r");
-  
-  len = fread(http->buff, 1, sizeof(http->buff), fp);
-#endif
   http->write_pos = len;
   http->content_read_lenght = 0;
   at = http->buff;
   
-#if 0
-  FILE *fdump = fopen("./dump.txt", "wb");
-  fwrite(http->buff, 1, sizeof(http->buff), fdump);
-#endif
   for(;;)
     {
       char *p = http->buff, *pend = http->buff + (http->write_pos - 1);
      
-      //printf("=========%s\n", http->buff);
-      
       while(p <= pend)
         {
-          //printf("===%s\n", p);
           switch(*p)
           {
             case '\r':
@@ -409,14 +393,7 @@ next_sector:
       /* fill in the buffer */
       while( sizeof(http->buff) > http->write_pos )
       {
-#if 1
         len = ws_socket_recv( socket, http->buff + http->write_pos, sizeof(http->buff) - http->write_pos, 0 );
-#else
-        len = fread(http->buff + http->write_pos, 1, sizeof(http->buff) - http->write_pos, fp);
-#endif
-#if 0
-        fwrite(http->buff + http->write_pos, 1, sizeof(http->buff) - http->write_pos, fdump);
-#endif
         if( len <= 0 )
           {
             stream_eof = 1;

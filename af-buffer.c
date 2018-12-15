@@ -40,39 +40,39 @@ static char buffer[SPIRAMSIZE];
 int
 audio_buffer_init(void)
 {
-	buf_read_pos = 0;
-	buf_write_pos = 0;
-	buf_fill = 0;
-	buf_overflow_count = 0;
-	buf_underflow_count = 0;
+  buf_read_pos = 0;
+  buf_write_pos = 0;
+  buf_fill = 0;
+  buf_overflow_count = 0;
+  buf_underflow_count = 0;
   
-	sem_read = util_create_semaphore(0);
-	sem_write = util_create_semaphore(0);
-	mux = util_create_mutex();
+  sem_read = util_create_semaphore(0);
+  sem_write = util_create_semaphore(0);
+  mux = util_create_mutex();
   
-	spi_ram_init();
-	return spi_ram_test();
+  spi_ram_init();
+  return spi_ram_test();
 }
 
 void
 audio_buffer_reset(void)
 {
-	util_mutex_take(mux);
-	buf_read_pos = 0;
-	buf_write_pos = 0;
-	buf_fill = 0;
-	buf_overflow_count = 0;
-	buf_underflow_count = 0;
-	util_semaphore_give(sem_write);
-	util_semaphore_take(sem_read);
-	util_mutex_give(mux);
+  util_mutex_take(mux);
+  buf_read_pos = 0;
+  buf_write_pos = 0;
+  buf_fill = 0;
+  buf_overflow_count = 0;
+  buf_underflow_count = 0;
+  util_semaphore_give(sem_write);
+  util_semaphore_take(sem_read);
+  util_mutex_give(mux);
 }
 
 void
 audio_buffer_read(char *buff, int len)
 {
-	int n;
-	while (len > 0)
+  int n;
+  while (len > 0)
     {
       n = len;
       if (n>SPIREADSIZE) n = SPIREADSIZE;   /* don't read more than SPIREADSIZE */
@@ -106,8 +106,8 @@ audio_buffer_read(char *buff, int len)
 void
 audio_buffer_write(const char *buff, int buffLen)
 {
-	int n;
-	while (buffLen > 0)
+  int n;
+  while (buffLen > 0)
     {
       n = buffLen;
       
@@ -144,41 +144,41 @@ audio_buffer_write(const char *buff, int buffLen)
 int
 audio_buffer_fill(void)
 {
-	int ret;
-	util_mutex_take(mux);
-	ret = buf_fill;
-	util_mutex_give(mux);
-	return ret;
+  int ret;
+  util_mutex_take(mux);
+  ret = buf_fill;
+  util_mutex_give(mux);
+  return ret;
 }
 
 int
 audio_buffer_free(void)
 {
-	return (SPIRAMSIZE-audio_buffer_fill());
+  return (SPIRAMSIZE-audio_buffer_fill());
 }
 
 int
 audio_buffer_size(void)
 {
-	return SPIRAMSIZE;
+  return SPIRAMSIZE;
 }
 
 long
 audio_buffer_get_overflow(void)
 {
-	long ret;
-	util_mutex_take(mux);
-	ret = buf_overflow_count;
-	util_mutex_take(mux);
-	return ret;
+  long ret;
+  util_mutex_take(mux);
+  ret = buf_overflow_count;
+  util_mutex_take(mux);
+  return ret;
 }
 
 long
 audio_buffer_get_underflow(void)
 {
-	long ret;
-	util_mutex_take(mux);
-	ret = buf_underflow_count;
-	util_mutex_take(mux);
-	return ret;
+  long ret;
+  util_mutex_take(mux);
+  ret = buf_underflow_count;
+  util_mutex_take(mux);
+  return ret;
 }
