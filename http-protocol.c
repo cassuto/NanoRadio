@@ -11,7 +11,7 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  */
-#define TRACE_UNIT "xapi"
+#define TRACE_UNIT "http"
 
 #include "portable.h"
 #include "util-logtrace.h"
@@ -19,6 +19,7 @@
 
 #include "http-protocol.h"
 
+#define DEBUG_HTTP 0
 #define HTTP_MIN(x, y) ((x) > (y) ? (y) : (x))
 
 static char
@@ -120,7 +121,7 @@ parse_url(char *url, const char **pproto, const char **phost, const char **pfile
 
 /* start/end specified the requested range in bytes. start = -1 when range field is invalid, end = -1 read through */
 static int
-http_send_request(http_t *http, int socket, const char *host, const char *file, int start, int end)
+http_send_request(http_t *http, const char *host, const char *file, int start, int end)
 {
   trace_assert( strlen(host) + strlen(file) < sizeof(http->buff) - 44 - 48 );
 
@@ -147,23 +148,29 @@ http_send_request(http_t *http, int socket, const char *host, const char *file, 
     }
   strcat( http->buff, "Connection: close\r\n\r\n" );
 
-#ifdef DEBUG
-  printf("header: %s\n", http_buff);
+#if DEBUG_HTTP > 1
+  trace_debug(("header: %s\n", http_buff));
 #endif
-  return ws_socket_send( socket, http->buff, strlen(http->buff), 0 );
+  return ws_socket_send( &http->socket, http->buff, strlen(http->buff), 0 );
+}
+
+void
+http_reset(http_t *http)
+{
+  ws_bzero(http, sizeof(*http));
 }
 
 int
 http_request(http_t *http, const char *host, const char *file, int port, int start, int end)
 {
   int len;
-  int socket = ws_socket_conn(host, port, 1);
-  if( socket < 0 ) return socket;
+  int rc = ws_socket_conn(&http->socket, host, port, 1);
+  if( rc < 0 ) return rc;
 
-  len = http_send_request(http, socket, host, file, start, end);
+  len = http_send_request(http, host, file, start, end);
   if( len <= 0 ) return WERR_TCP_RECV;
 
-  return socket;
+  return 0;
 }
 
 static char *
@@ -210,7 +217,7 @@ enum SMCODE
  * Return HTTP status code (> 0) if a server error occurred.
  */
 int
-http_read_response(http_t *http, int socket, const http_event_procs_t *event_procs)
+http_read_response(http_t *http, const http_event_procs_t *event_procs)
 {
   int status;
   enum SMCODE smcode;
@@ -222,7 +229,7 @@ http_read_response(http_t *http, int socket, const http_event_procs_t *event_pro
   int block_length = 0;
   char stream_eof = 0;
 
-  while( sizeof(http->buff) - pos > 0 && (len = ws_socket_recv( socket, http->buff + pos, sizeof(http->buff) - pos, 0 )) )
+  while( sizeof(http->buff) - pos > 0 && (len = ws_socket_recv( &http->socket, http->buff + pos, sizeof(http->buff) - pos, 0 )) )
     {
       if( len <= 0 ) break;
       pos += len;
@@ -231,8 +238,8 @@ http_read_response(http_t *http, int socket, const http_event_procs_t *event_pro
   if(!pos) return -WERR_TCP_RECV;
   
   while(isspace(*response)) response++;
-#ifdef DEBUG
-  printf("response: %s\n", response);
+#if DEBUG_HTTP > 1
+  trace_debug(("response: %s\n", response));
 #endif
   if( 0 != strncmp(response, "HTTP/1.1", sizeof("HTTP/1.1")-1) )
     return -WERR_HTTP_HEADER;
@@ -393,7 +400,7 @@ next_sector:
       /* fill in the buffer */
       while( sizeof(http->buff) > http->write_pos )
       {
-        len = ws_socket_recv( socket, http->buff + http->write_pos, sizeof(http->buff) - http->write_pos, 0 );
+        len = ws_socket_recv( &http->socket, http->buff + http->write_pos, sizeof(http->buff) - http->write_pos, 0 );
         if( len <= 0 )
           {
             stream_eof = 1;

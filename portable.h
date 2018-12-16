@@ -15,13 +15,6 @@
 #ifndef PORTABLE_H_
 #define PORTABLE_H_
 
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-#include <ctype.h>
-
 /*
  * Configuration definitions
  */
@@ -53,10 +46,13 @@
 #endif
 #define NC_P(p) ICACHE_FLASH_ATTR p
 
+#ifdef NO_RTL
+
 /*
  * Memory management helper functions
  */
 #define ws_malloc( /* size_t */ size )  malloc(size)
+#define ws_calloc( /* size_t */ size, /* size_t */ count )  calloc(size, count)
 #define ws_realloc( /* void * */ mem, /* size_t */ newsize ) realloc(mem, newsize)
 #define ws_free( /* void * */ mem )     free(mem)
 #define ws_memcpy( /* void * */ dst, /* void * */ src, /* size_t */ size ) memcpy(dst, src, size)
@@ -65,7 +61,14 @@
 # define ws_bzero( /* void * */ dst, /* size_t */ size ) ws_memset((dst), 0, (size))
 #endif
 
-#ifndef IN_TCP_SOCKET
+#include <stdarg.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+
 static inline char *ws_strdup( const char *src )
 {
   char *mem = (char *)ws_malloc( strlen(src) + 1 );

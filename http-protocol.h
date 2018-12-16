@@ -14,6 +14,8 @@
 #ifndef HTTP_PROTOCOL_H_
 #define HTTP_PROTOCOL_H_
 
+#include "tcp-socket.h"
+
 typedef struct {
   char buff[1024]; /* a frame of HTTP header */
   int content_lenght;
@@ -21,6 +23,7 @@ typedef struct {
   char chunked;
   int chunked_size;
   int write_pos;
+  tcp_socket_t socket;
 } http_t;
 
 typedef struct {
@@ -29,8 +32,9 @@ typedef struct {
   int (*event_content_type)(char *at, int length);
 } http_event_procs_t;
 
+void http_reset(http_t *http);
 int http_request(http_t *http, const char *host, const char *file, int port, int start, int end);
-int http_read_response(http_t *http, int socket, const http_event_procs_t *event_procs);
+int http_read_response(http_t *http, const http_event_procs_t *event_procs);
 
 int parse_url(char *url, const char **pproto, const char **phost, const char **pfile, int *pport);
 
