@@ -30,11 +30,11 @@ static long buf_overflow_count, buf_underflow_count;
 #undef SPIRAMSIZE
 
 #define SPIRAMSIZE 32000
-static char buffer[SPIRAMSIZE];
-#define spi_ram_init() while(0)
-#define spi_ram_test() 1
-#define spi_ram_write(pos, buf, n) memcpy(&buffer[pos], buf, n)
-#define spi_ram_read(pos, buf, n) memcpy(buf, &buffer[pos], n)
+  static char buffer[SPIRAMSIZE]; /* Utilize SRAM built in SoC */
+# define spi_ram_init() while(0)
+# define spi_ram_test() 1
+# define spi_ram_write(pos, buf, n) memcpy(&buffer[pos], buf, n)
+# define spi_ram_read(pos, buf, n) memcpy(buf, &buffer[pos], n)
 #endif
 
 int
@@ -98,7 +98,7 @@ audio_buffer_read(char *buff, int len)
           buf_read_pos += n;
           if( buf_read_pos >= SPIRAMSIZE ) buf_read_pos=0;
           util_mutex_give(mux);
-          util_semaphore_give(sem_write); //Indicate writer thread there's some free room in the fifo
+          util_semaphore_give(sem_write); /* Indicate writer thread there's some free room in the fifo */
         }
     }
 }
@@ -135,12 +135,12 @@ audio_buffer_write(const char *buff, int buffLen)
           buf_write_pos += n;
           if (buf_write_pos >= SPIRAMSIZE) buf_write_pos = 0;
           util_mutex_give(mux);
-          util_semaphore_give(sem_read); // Tell reader thread there's some data in the fifo.
+          util_semaphore_give(sem_read); /* Tell reader thread there's some data in the fifo. */
         }
     }
 }
 
-/* Get amount of bytes in use */
+/* get amount of bytes in use */
 int
 audio_buffer_fill(void)
 {
@@ -151,17 +151,14 @@ audio_buffer_fill(void)
   return ret;
 }
 
+/* get amount of bytes free */
 int
 audio_buffer_free(void)
-{
-  return (SPIRAMSIZE-audio_buffer_fill());
-}
+{ return (SPIRAMSIZE-audio_buffer_fill()); }
 
 int
 audio_buffer_size(void)
-{
-  return SPIRAMSIZE;
-}
+{ return SPIRAMSIZE; }
 
 long
 audio_buffer_get_overflow(void)

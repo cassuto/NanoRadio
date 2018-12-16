@@ -28,7 +28,6 @@ const adif_t *adif_instance;
 volatile audio_status_t audio_status;
 volatile char audio_running;
 static http_t stream_http;
-static volatile int stream_socket;
 static volatile int audio_error; /* non-atomic, not for accurate controling */
 static volatile stream_type_t stream_type;
 
@@ -116,7 +115,7 @@ task_audio_http_connect(void *opaque)
       .event_redirect = event_redirect,
       .event_content_type = event_content_type
     };
-  audio_error = http_read_response(&stream_http, stream_socket, &procs);
+  audio_error = http_read_response(&stream_http, &procs);
 
   util_task_exit();
   WS_UNUSED(opaque);
@@ -127,7 +126,9 @@ task_audio_open(const char *host, const char *file, int port)
 {
   if( audio_status == AUDIO_IDLE )
     {
-      stream_socket = http_request(&stream_http, host, file, port, -1, -1);
+      int rc;
+      if( (rc = http_request(&stream_http, host, file, port, -1, -1)) )
+        return rc;
       return util_create_task(task_audio_http_connect, 2048, CORE_CODEC, NULL);
     }
   return -WERR_BUSY;

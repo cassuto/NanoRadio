@@ -17,6 +17,12 @@
 #include "xapi.h"
 #include "tasks.h"
 
+/* ssl_loader.c */
+unsigned char default_certificate[] = {0};
+unsigned int default_certificate_len = 0;
+unsigned char default_private_key[] = {0};
+unsigned int default_private_key_len = 0;
+
 const char *city_name = "Lijiang";
 
 
@@ -49,17 +55,18 @@ int main(void)
   //query_rss("www.people.com.cn", "/rss/politics.xml");
   
   task_audio_init();
-  task_audio_open("http.hz.qingting.fm", "/386.mp3", 80);
+  task_audio_open("http.hz.qingting.fm", "/386.mp3", 443);
   
   http_t http;
-  int stream_socket = http_request(&http, "nanoradio.github.io", "/api/channel/entry.1209.0", 80, -1, -1);
+  int rc = http_request(&http, "nanoradio.github.io", "/api/channel/entry.1209.0", 443, -1, -1);
   http_event_procs_t procs =
     {
       .event_body = event_body,
       .event_redirect = event_redirect,
       .event_content_type = event_content_type
     };
-  printf("RC=%d\n", http_read_response(&http, stream_socket, &procs));
+  if( !rc )
+    printf("RC=%d\n", http_read_response(&http, &procs));
   
   
   while(1);
