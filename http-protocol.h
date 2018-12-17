@@ -32,6 +32,7 @@ typedef struct {
   int (*event_content_type)(char *at, int length);
 } http_event_procs_t;
 
+void http_callbacks_init(http_event_procs_t *procs);
 void http_reset(http_t *http);
 int http_request(http_t *http, const char *host, const char *file, int port, int start, int end);
 int http_read_response(http_t *http, const http_event_procs_t *event_procs);

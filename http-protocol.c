@@ -20,6 +20,8 @@
 #include "http-protocol.h"
 
 #define DEBUG_HTTP 0
+#define HTTP_VALIDATE_LENGTH 0
+
 #define HTTP_MIN(x, y) ((x) > (y) ? (y) : (x))
 
 static char
@@ -411,10 +413,12 @@ next_sector:
 
     };
   
+#if HTTP_VALIDATE_LENGTH /* some servers do not process the content lenght in right way */
   if(http->content_lenght && http->content_lenght != http->content_read_lenght)
     {
       return -WERR_TCP_RECV;
     }
+#endif
   
   return 0;
 }

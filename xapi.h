@@ -37,4 +37,28 @@ typedef struct
 int query_current_data(const char *city, current_weather_t *data);
 int query_rss(const char *host, const char *file);
 
+int update_root_catalog(void);
+
+typedef enum
+{
+  RADLST_UNKNOWN = 0,
+  RADLST_STRING,
+  RADLST_NUMBER
+} radiolist_type_t;
+
+typedef struct
+{
+  radiolist_type_t type;
+  int length;
+  union
+  {
+    int number;
+    const char *string;
+  } u;
+} radiolist_token_t;
+
+void radiolist_reset_parser(void);
+int radiolist_items_count(void);
+int radiolist_parse_token(int line, radiolist_token_t *token);
+
 #endif

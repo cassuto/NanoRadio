@@ -46,7 +46,7 @@
 #endif
 #define NC_P(p) ICACHE_FLASH_ATTR p
 
-#ifdef NO_RTL
+#ifndef NO_RTL
 
 /*
  * Memory management helper functions
