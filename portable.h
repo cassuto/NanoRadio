@@ -107,5 +107,6 @@ static inline char *ws_strndup( const char *src, size_t len )
 #define WERR_OPEN_DEVICE  (10)
 #define WERR_BUSY         (11)
 #define WERR_UNKNOW_TYPE  (12)
+#define WERR_BUFFER_OVERFLOW (13)
 
 #endif //!defined(PORTABLE_H_)
