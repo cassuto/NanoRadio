@@ -25,19 +25,19 @@
 #define HTTP_MIN(x, y) ((x) > (y) ? (y) : (x))
 
 static char
-http_isdigit(char ch)
+NC_P(http_isdigit)(char ch)
 {
   return ((ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F') || (ch >= '0' && ch <= '9'));
 }
 
 static int
-http_ctn(char ch)
+NC_P(http_ctn)(char ch)
 {
   return (ch >= 'a' ? ch - 'a' + 10 : ch >= 'A' ? ch - 'A' + 10 : ch - '0');
 }
 
 static int
-http_atoi(const char *p, int radix)
+NC_P(http_atoi)(const char *p, int radix)
 {
   int num = 0;
   if( !p ) return 0;
@@ -51,7 +51,7 @@ http_atoi(const char *p, int radix)
 }
 
 static void
-http_itoa(char *buff, int size, int num)
+NC_P(http_itoa)(char *buff, int size, int num)
 {
   char t;
   char *p, *firstdig = buff;
@@ -80,7 +80,7 @@ http_itoa(char *buff, int size, int num)
  * the url parameter must be a writable buffer, not a constant string stored in readonly data segment.
  */
 int
-parse_url(char *url, const char **pproto, const char **phost, const char **pfile, int *pport)
+NC_P(parse_url)(char *url, const char **pproto, const char **phost, const char **pfile, int *pport)
 {
   char *p;
   while(isspace(*url)) url++;
@@ -123,7 +123,7 @@ parse_url(char *url, const char **pproto, const char **phost, const char **pfile
 
 /* start/end specified the requested range in bytes. start = -1 when range field is invalid, end = -1 read through */
 static int
-http_send_request(http_t *http, const char *host, const char *file, int start, int end)
+NC_P(http_send_request)(http_t *http, const char *host, const char *file, int start, int end)
 {
   trace_assert( strlen(host) + strlen(file) < sizeof(http->buff) - 44 - 48 );
 
@@ -157,13 +157,13 @@ http_send_request(http_t *http, const char *host, const char *file, int start, i
 }
 
 void
-http_reset(http_t *http)
+NC_P(http_reset)(http_t *http)
 {
   ws_bzero(http, sizeof(*http));
 }
 
 int
-http_request(http_t *http, const char *host, const char *file, int port, int start, int end)
+NC_P(http_request)(http_t *http, const char *host, const char *file, int port, int start, int end)
 {
   int len;
   int rc = ws_socket_conn(&http->socket, host, port, 1);
@@ -176,7 +176,7 @@ http_request(http_t *http, const char *host, const char *file, int port, int sta
 }
 
 static char *
-get_http_field(const char *buff, char *field, char **end)
+NC_P(get_http_field)(const char *buff, char *field, char **end)
 {
   char *pos = strstr( buff, field );
   if( !pos )
@@ -200,7 +200,7 @@ dummy_event_vstr(char *url)
 { return 0; WS_UNUSED(url); }
 
 void
-http_callbacks_init(http_event_procs_t *procs)
+NC_P(http_callbacks_init)(http_event_procs_t *procs)
 {
   procs->event_body = &dummy_event_at_length;
   procs->event_redirect = &dummy_event_vstr;
@@ -219,7 +219,7 @@ enum SMCODE
  * Return HTTP status code (> 0) if a server error occurred.
  */
 int
-http_read_response(http_t *http, const http_event_procs_t *event_procs)
+NC_P(http_read_response)(http_t *http, const http_event_procs_t *event_procs)
 {
   int status;
   enum SMCODE smcode;

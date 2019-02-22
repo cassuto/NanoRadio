@@ -25,6 +25,9 @@
 #if PORT(POSIX)
 # define log_putc(c)       fputc( c, stdout )
 # define log_getc()        (char)fgetc( stdin )
+#elif PORT(ESP8266)
+# define log_putc(c)       printf( "%c", c )
+# define log_getc()        0
 #else
 # define log_putc(c)       ((void)c)
 # define log_getc()        0
@@ -45,14 +48,14 @@ unsigned char dev_in( void )
 { return log_getc(); }
 
 void
-ws_log_init( void )
+NC_P(ws_log_init)( void )
 {
   ws_set_dev_out( dev_out );
   ws_set_dev_in( dev_in );
 }
 
 void
-ws_log_set_unit( const char *unitname, const char *filename, int line )
+NC_P(ws_log_set_unit)( const char *unitname, const char *filename, int line )
 {
   log_unit_name = unitname ? unitname : "all";
   log_unit_filename = filename ? filename : "unknown";
@@ -60,13 +63,13 @@ ws_log_set_unit( const char *unitname, const char *filename, int line )
 }
 
 void
-ws_log_set_level( ws_log_level_t level )
+NC_P(ws_log_set_level)( ws_log_level_t level )
 {
   log_level = level;
 }
 
 void
-ws_log_trace( const char *format, ... )
+NC_P(ws_log_trace)( const char *format, ... )
 {
 #if PORT(POSIX)
   char buff[1024];
@@ -84,7 +87,7 @@ ws_log_trace( const char *format, ... )
 }
 
 void
-ws_panic( int rc )
+NC_P(ws_panic)( int rc )
 {
 #if PORT(POSIX)
   exit( 1 );

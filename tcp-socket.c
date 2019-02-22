@@ -25,20 +25,22 @@
 # define closesocket close
 
 #elif PORT (LWIP)
-# include "include/lwip/lwip/sockets.h"
-# include "include/lwip/lwip/dns.h"
-# include "include/lwip/lwip/netdb.h"
+# include "lwip/sockets.h"
+# include "lwip/dns.h"
+# include "lwip/netdb.h"
 
 #else
 #error no socket interface defined!
 #endif
 
-#undef NO_RTL
+//#undef NO_RTL
 #include "portable.h"
 #include "util-logtrace.h"
-#include <mbedtls/net.h>
-#include <mbedtls/ssl.h>
-#include <mbedtls/debug.h>
+#if USING(MBEDTLS)
+# include <mbedtls/net.h>
+# include <mbedtls/ssl.h>
+# include <mbedtls/debug.h>
+#endif
 
 #include "tcp-socket.h"
 
@@ -70,7 +72,7 @@ NC_P(parsehost)(const char *host, struct sockaddr_in *ip)
 }
 
 static void
-tcp_socket_reset(tcp_socket_t *socket)
+NC_P(tcp_socket_reset)(tcp_socket_t *socket)
 {
   ws_bzero(socket, sizeof(*socket));
   socket->fd = -1;
@@ -78,11 +80,13 @@ tcp_socket_reset(tcp_socket_t *socket)
 }
 
 static void
-ssl_debug(void *ctx, int level, const char *file, int line, const char *str )
+NC_P(ssl_debug)(void *ctx, int level, const char *file, int line, const char *str )
 {
   WS_UNUSED(level);
+#if DEBUG_TCP_SOCKET && PORT(POSIX)
   fprintf( (FILE *) ctx, "%s:%04d: %s", file, line, str );
   fflush(  (FILE *) ctx  );
+#endif
 }
 
 /**
@@ -117,13 +121,14 @@ NC_P(ws_socket_conn)(tcp_socket_t *tsock, const char *host, int port, int retry)
     {
       if( tsock->sslconn )
         {
+#if USING(MBEDTLS)
           mbedtls_net_init(&(tsock->net));
           mbedtls_ssl_init(&(tsock->ssl));
           mbedtls_ssl_config_init(&tsock->conf);
           mbedtls_ctr_drbg_init(&tsock->ctr_drbg);
           mbedtls_entropy_init(&tsock->entropy);
           mbedtls_ctr_drbg_seed(&tsock->ctr_drbg, mbedtls_entropy_func, &tsock->entropy, entropy, entropy_len);
-
+          
           /* Create SSL for data transmission */
           if( ( rc = mbedtls_net_connect( &tsock->net, host, "443", MBEDTLS_NET_PROTO_TCP ) ) )
             {
@@ -158,6 +163,11 @@ NC_P(ws_socket_conn)(tcp_socket_t *tsock, const char *host, int port, int retry)
                   return -WERR_CONN_FATAL;
                 }
             }
+#elif USING(SSL)
+#else
+          /* failed. There is not any implement to establish a SSL conenction... */
+          return -WERR_CONN_FATAL;
+#endif
           trace_info(("SSL Connected\n"));
         }
       else
@@ -202,6 +212,7 @@ NC_P(ws_socket_recv)(tcp_socket_t *tsock, char *buffer, size_t size, int flags)
 {
   if( tsock->sslconn )
     {
+#if USING(MBEDTLS)
       for(;;)
         {
           int rc = mbedtls_ssl_read(&tsock->ssl, (unsigned char *)buffer, size);
@@ -224,6 +235,10 @@ NC_P(ws_socket_recv)(tcp_socket_t *tsock, char *buffer, size_t size, int flags)
             }
           return rc;
         }
+#elif USING(SSL)
+#else
+      return -WERR_FAILED;
+#endif
     }
   else
     return recv(tsock->fd, buffer, size, flags);
@@ -234,6 +249,7 @@ NC_P(ws_socket_send)(tcp_socket_t *tsock, const char *buffer, size_t size, int f
 {
   if( tsock->sslconn )
     {
+#if USING(MBEDTLS)
       int rc;
       while( ( rc = mbedtls_ssl_write( &tsock->ssl, (unsigned char *)buffer, size ) ) <= 0 ) /* retry when required */
         {
@@ -246,6 +262,10 @@ NC_P(ws_socket_send)(tcp_socket_t *tsock, const char *buffer, size_t size, int f
             }
         }
       return rc;
+#elif USING(SSL)
+#else
+      return -WERR_FAILED;
+#endif
     }
   else
     return send(tsock->fd, buffer, size, flags);
@@ -256,11 +276,16 @@ NC_P(ws_socket_close)(tcp_socket_t *tsock)
 {
   if( tsock->sslconn )
     {
+#if USING(MBEDTLS)
       mbedtls_net_free( &tsock->net );
       mbedtls_ssl_free( &tsock->ssl );
       mbedtls_ssl_config_free( &tsock->conf );
       mbedtls_ctr_drbg_free( &tsock->ctr_drbg );
       mbedtls_entropy_free( &tsock->entropy );
+#elif USING(SSL)
+#else
+      return -WERR_FAILED;
+#endif
     }
   else
     {

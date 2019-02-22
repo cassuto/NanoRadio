@@ -17,31 +17,12 @@
 #include "xapi.h"
 #include "tasks.h"
 
-/* ssl_loader.c */
-unsigned char default_certificate[] = {0};
-unsigned int default_certificate_len = 0;
-unsigned char default_private_key[] = {0};
-unsigned int default_private_key_len = 0;
-
 const char *city_name = "Lijiang";
 
-
 static int
-event_redirect(char *url)
+entry_proc(const char *value, int length, void *opaque)
 {
-  return 0; /* todo */
-}
-
-static int
-event_content_type(char *at, int length)
-{
-  return 0;
-}
-
-static int
-event_body(char *at, int length)
-{
-  printf("%.*s", length, at);
+  printf("%.*s\n", length, value);
   return 0;
 }
 
@@ -53,22 +34,29 @@ int main(void)
   //query_current_data( city_name, &weather );
 
   //query_rss("www.people.com.cn", "/rss/politics.xml");
+  radiolist_time_t radtime;
+  radio_update_program(386, 1, 0);
+  radio_program(entry_proc, NULL);
+  radio_program_start_time(2, &radtime);
+  printf("%d %d %d\n", radtime.hour, radtime.min, radtime.sec);
+  return 0;
+  
+  printf("radio_channel_chunkinfo() = %d\n", radio_channel_chunkinfo(1209));
+  printf("radio_update_channel() = %d\n", radio_update_channel(1209, 0));
+  printf("id = %d\n", radio_channel(&entry_proc, NULL));
+  int server_id = radio_server_id(0);
+  int stream_id = radio_stream_id(0);
+  const char *host, *file;
+
+  printf("ser = %d\n", server_id);
+  printf("e = %d\n", stream_id);
+  
+  printf("g = %d\n", radio_server(server_id, stream_id, &host, &file));
+  printf("host = %s\n", host);
+  printf("file = %s\n", file);
   
   task_audio_init();
-  task_audio_open("http.hz.qingting.fm", "/386.mp3", 443);
-  
-  http_t http;
-  int rc = http_request(&http, "nanoradio.github.io", "/api/channel/entry.1209.0", 443, -1, -1);
-  http_event_procs_t procs =
-    {
-      .event_body = event_body,
-      .event_redirect = event_redirect,
-      .event_content_type = event_content_type
-    };
-  if( !rc )
-    printf("RC=%d\n", http_read_response(&http, &procs));
-  
-  
+  task_audio_open(host, file, 80);
   while(1);
   
   return 0;

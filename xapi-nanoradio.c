@@ -28,10 +28,10 @@ static const char *api_channel_entry = "/api/channel/entry.%d.%d";
 static const char *api_program_info = "/api/program/info.%d.%d";
 static const char *api_program_list = "/api/program/list.%d.%d.%d";
 
-#define NANORADIO_API_CHUNK 4 * 1024
+#define NANORADIO_API_CHUNK 4 //4 * 1024
 
 static char api_chunk[NANORADIO_API_CHUNK+1];
-static char api_buff[512];
+static char api_buff[4/*512*/];
 static int api_chunk_write_pos;
 static int api_parsing_pos;
 
@@ -48,7 +48,7 @@ enum CURRENT_API {
 static enum CURRENT_API api_current;
 
 static int
-event_body(char *at, int length)
+NC_P(event_body)(char *at, int length)
 {
   if( api_chunk_write_pos >= sizeof api_chunk-1 )
     return 0;
@@ -61,7 +61,7 @@ event_body(char *at, int length)
 }
 
 static int
-api_request_chunk(const char *api_file, enum CURRENT_API current)
+NC_P(api_request_chunk)(const char *api_file, enum CURRENT_API current)
 {
   int rc;
   http_t http;
@@ -83,13 +83,13 @@ api_request_chunk(const char *api_file, enum CURRENT_API current)
 }
 
 void
-radiolist_reset_parser(void)
+NC_P(radiolist_reset_parser)(void)
 {
   api_parsing_pos = 0;
 }
 
 void
-radiolist_parser_goto(int index)
+NC_P(radiolist_parser_goto)(int index)
 {
   const char *p = api_chunk, *offset = api_chunk;
   radiolist_reset_parser();
@@ -111,7 +111,7 @@ radiolist_parser_goto(int index)
 }
 
 int
-radiolist_entries_count(void)
+NC_P(radiolist_entries_count)(void)
 {
   register int count = 0;
   const char *p = api_chunk;
@@ -131,7 +131,7 @@ enum rdlst_parser_state
 };
 
 int
-radiolist_parse_token(radiolist_token_t *token)
+NC_P(radiolist_parse_token)(radiolist_token_t *token)
 {
   register char ch;
   enum rdlst_parser_state parser_state = PARSE_INITIAL;
@@ -258,14 +258,14 @@ parse_end:
   }
 
 int
-radio_update_root_catalog(void)
+NC_P(radio_update_root_catalog)(void)
 {
   return api_request_chunk(api_catalog_root, API_CATALOG_ROOT);
 }
 
 /* required update_root_catalog() */
 int
-radio_root_catalog(pfn_radio_entry_s entry_callback, void *opaque)
+NC_P(radio_root_catalog)(pfn_radio_entry_s entry_callback, void *opaque)
 {
   int rc;
   radiolist_token_t token;
@@ -286,7 +286,7 @@ radio_root_catalog(pfn_radio_entry_s entry_callback, void *opaque)
 
 /* required update_root_catalog() */
 int
-radio_root_catalog_id(int index)
+NC_P(radio_root_catalog_id)(int index)
 {
   int rc;
   radiolist_token_t token;
@@ -304,7 +304,7 @@ radio_root_catalog_id(int index)
 }
 
 int
-radio_update_catalog(int catalog_id)
+NC_P(radio_update_catalog)(int catalog_id)
 {
   if( snprintf(api_buff, sizeof api_buff, api_catalog_entry, catalog_id) < 0 )
     return -WERR_BUFFER_OVERFLOW;
@@ -313,7 +313,7 @@ radio_update_catalog(int catalog_id)
 
 /* required update_catalog() */
 int
-radio_catalog(pfn_radio_entry_s entry_callback, void *opaque)
+NC_P(radio_catalog)(pfn_radio_entry_s entry_callback, void *opaque)
 {
   int rc;
   radiolist_token_t token;
@@ -337,7 +337,7 @@ radio_catalog(pfn_radio_entry_s entry_callback, void *opaque)
 
 /* required update_catalog() */
 int
-radio_catalog_id(int index)
+NC_P(radio_catalog_id)(int index)
 {
   int rc;
   radiolist_token_t token;
@@ -354,7 +354,7 @@ radio_catalog_id(int index)
 
 /* return < 0 if failed, otherwise the number of chunks */
 int
-radio_channel_chunkinfo(int channel_id)
+NC_P(radio_channel_chunkinfo)(int channel_id)
 {
   int rc;
   radiolist_token_t token;
@@ -375,7 +375,7 @@ radio_channel_chunkinfo(int channel_id)
 }
 
 int
-radio_update_channel(int channel_id, int chunk_id)
+NC_P(radio_update_channel)(int channel_id, int chunk_id)
 {
   int rc;
   if( snprintf(api_buff, sizeof api_buff, api_channel_entry, channel_id, chunk_id) < 0 )
@@ -387,7 +387,7 @@ radio_update_channel(int channel_id, int chunk_id)
 
 /* required radio_update_channel() */
 int
-radio_channel(pfn_radio_entry_s entry_callback, void *opaque)
+NC_P(radio_channel)(pfn_radio_entry_s entry_callback, void *opaque)
 {
   int rc;
   radiolist_token_t token;
@@ -414,7 +414,7 @@ radio_channel(pfn_radio_entry_s entry_callback, void *opaque)
 
 /* required radio_update_channel() */
 int
-radio_server_id(int index)
+NC_P(radio_server_id)(int index)
 {
   int rc;
   radiolist_token_t token;
@@ -431,7 +431,7 @@ radio_server_id(int index)
 
 /* required radio_update_channel() */
 int
-radio_stream_id(int index)
+NC_P(radio_stream_id)(int index)
 {
   int rc;
   radiolist_token_t token;
@@ -449,7 +449,7 @@ radio_stream_id(int index)
 }
 
 static int
-apply_url_pattern(char *buf, int buffsize, int stream_id)
+NC_P(apply_url_pattern)(char *buf, int buffsize, int stream_id)
 {
   while( *buf )
     {
@@ -482,7 +482,7 @@ apply_url_pattern(char *buf, int buffsize, int stream_id)
                   num /= 10;
                 }
               if( num && p == buf )
-                return;
+                return -WERR_BUFFER_OVERFLOW;
             }
           p--;
           do {  /* reverse digitals */
@@ -502,7 +502,7 @@ apply_url_pattern(char *buf, int buffsize, int stream_id)
 
 /* required radio_update_server(), using common buffer */
 int
-radio_server(int server_id, int stream_id, const char **host, const char **file)
+NC_P(radio_server)(int server_id, int stream_id, const char **host, const char **file)
 {
   int rc, pos;
   radiolist_token_t token;
@@ -518,13 +518,14 @@ radio_server(int server_id, int stream_id, const char **host, const char **file)
     return rc;
   if( token.type == RADLST_STRING )
     {
+      char *file_buf;
       if( token.length >= sizeof api_buff )
         return -WERR_BUFFER_OVERFLOW;
       memcpy(api_buff, token.u.string, token.length);
       api_buff[(pos = token.length)] = 0;
       
       *host = api_buff;
-      *file = &api_buff[++pos];
+      file_buf = &api_buff[++pos];
       
       if( (rc = radiolist_parse_token(&token)) ) /* <file> field */
         return rc;
@@ -533,11 +534,14 @@ radio_server(int server_id, int stream_id, const char **host, const char **file)
           pos += token.length;
           if( pos >= sizeof api_buff )
             return -WERR_BUFFER_OVERFLOW;
-          memcpy(*file, token.u.string, token.length);
+          memcpy(file_buf, token.u.string, token.length);
           api_buff[pos] = 0;
           
-          if( !apply_url_pattern(*file, sizeof api_buff, stream_id) )
-            return 0;
+          if( !apply_url_pattern(file_buf, sizeof api_buff, stream_id) )
+            {
+              *file = file_buf;
+              return 0;
+            }
         }
     }
   *host = NULL;
@@ -547,7 +551,7 @@ radio_server(int server_id, int stream_id, const char **host, const char **file)
 
 /* return < 0 if failed, otherwise the number of chunks */
 int
-radio_program_chunkinfo(int channel_id, int day_id)
+NC_P(radio_program_chunkinfo)(int channel_id, int day_id)
 {
   int rc;
   radiolist_token_t token;
@@ -568,7 +572,7 @@ radio_program_chunkinfo(int channel_id, int day_id)
 }
 
 int
-radio_update_program(int channel_id, int day_id, int chunk_id)
+NC_P(radio_update_program)(int channel_id, int day_id, int chunk_id)
 {
   int rc;
   if( snprintf(api_buff, sizeof api_buff, api_program_list, channel_id, day_id, chunk_id) < 0 )
@@ -580,7 +584,7 @@ radio_update_program(int channel_id, int day_id, int chunk_id)
 
 /* required radio_update_program() */
 int
-radio_program(pfn_radio_entry_s entry_callback, void *opaque)
+NC_P(radio_program)(pfn_radio_entry_s entry_callback, void *opaque)
 {
   int rc;
   radiolist_token_t token;
@@ -607,7 +611,7 @@ radio_program(pfn_radio_entry_s entry_callback, void *opaque)
 
 /* required radio_update_program() */
 int
-radio_program_start_time(int index, radiolist_time_t *radtime)
+NC_P(radio_program_start_time)(int index, radiolist_time_t *radtime)
 {
   int rc;
   radiolist_token_t token;
@@ -628,7 +632,7 @@ radio_program_start_time(int index, radiolist_time_t *radtime)
 
 /* required radio_update_program() */
 int
-radio_program_end_time(int index, radiolist_time_t *radtime)
+NC_P(radio_program_end_time)(int index, radiolist_time_t *radtime)
 {
   int rc;
   radiolist_token_t token;

@@ -12,6 +12,7 @@
  *  Lesser General Public License for more details.
  */
 
+#include "portable.h"
 #include "util-task.h"
 
 #if PORT(POSIX)
@@ -44,7 +45,7 @@ thread_entry(void *opaque)
 #endif
 
 int
-util_create_task(pfn_util_task_callback callback, int stack_size, util_coreid_t coreid, void *opaque)
+NC_P(util_create_task)(pfn_util_task_callback callback, const char *name, int stack_size, util_coreid_t coreid, void *opaque)
 {
 #if PORT(POSIX)
   pthread_t tid;
@@ -58,58 +59,120 @@ util_create_task(pfn_util_task_callback callback, int stack_size, util_coreid_t 
   
   return pthread_create(&tid, NULL, thread_entry, param);
   WS_UNUSED(stack_size);
+#elif PORT(FREE_RTOS)
+  if( xTaskCreate(callback, name, 230, opaque, PRIO_READER, NULL) != pdPASS )
+    return -WERR_FAULT;
+  WS_UNUSED(coreid);
 #endif
   return 0;
 }
 
 void
-util_task_exit(void)
+NC_P(util_task_exit)(void)
 {
 }
 
 util_semaphore_t
 util_create_semaphore(int value)
 {
+#if PORT(POSIX)
   sem_t sem;
   if( sem_init(&sem, 0, value) )
     return 0;
   return (util_semaphore_t)sem;
+#elif PORT(FREE_RTOS)
+  xSemaphoreHandle sem;
+  vSemaphoreCreateBinary(sem);
+  return (util_semaphore_t)sem;
+#endif
+  return 0;
 }
 
 void
 util_destroy_semaphore(util_semaphore_t sem)
-{ sem_destroy((sem_t*)(&sem)); }
+{
+#if PORT(POSIX)
+  sem_destroy((sem_t*)(&sem));
+#elif PORT(FREE_RTOS)
+  xSemaphoreHandle xSem = (xSemaphoreHandle)sem;
+  vSemaphoreDelete(xSem);
+#endif
+}
 
 int
 util_semaphore_take(util_semaphore_t sem)
-{ return sem_wait((sem_t*)(&sem)); }
+{
+#if PORT(POSIX)
+  return sem_wait((sem_t*)(&sem));
+#elif PORT(FREE_RTOS)
+  xSemaphoreHandle xSem = (xSemaphoreHandle)sem;
+  return xSemaphoreTake(xSem);
+#endif
+}
 
 int
 util_semaphore_give(util_semaphore_t sem)
-{ return sem_post((sem_t*)(&sem)); }
+{
+#if PORT(POSIX)
+  return sem_post((sem_t*)(&sem));
+#elif PORT(FREE_RTOS)
+  xSemaphoreHandle xSem = (xSemaphoreHandle)sem;
+  return xSemaphoreGive(xSem);
+#endif
+}
 
 util_mutex_t
 util_create_mutex(void)
 {
+#if PORT(POSIX)
   pthread_mutex_t mutex;
   if( pthread_mutex_init(&mutex, NULL) )
     return 0;
   return (util_mutex_t)mutex;
+#elif PORT(FREE_RTOS)
+  xSemaphoreHandle mutex = xSemaphoreCreateMutex();
+  return (util_mutex_t)mutex;
+#endif
+  return 0;
 }
 
 void
 util_mutex_take(util_mutex_t mutex)
-{ pthread_mutex_lock((pthread_mutex_t *)(&mutex)); }
+{
+#if PORT(POSIX)
+  pthread_mutex_lock((pthread_mutex_t *)(&mutex));
+#elif PORT(FREE_RTOS)
+  xSemaphoreHandle xSem = (xSemaphoreHandle)mutex;
+  return xSemaphoreTake(xSem);
+#endif
+}
 
 void
 util_mutex_give(util_mutex_t mutex)
-{ pthread_mutex_unlock((pthread_mutex_t *)(&mutex)); }
+{
+#if PORT(POSIX)
+  pthread_mutex_unlock((pthread_mutex_t *)(&mutex));
+#elif PORT(FREE_RTOS)
+  xSemaphoreHandle xSem = (xSemaphoreHandle)mutex;
+  return xSemaphoreGive(xSem);
+#endif
+}
 
 void
 util_mutex_destroy(util_mutex_t mutex)
-{ pthread_mutex_destroy((pthread_mutex_t *)(&mutex)); }
+{
+#if PORT(POSIX)
+  pthread_mutex_destroy((pthread_mutex_t *)(&mutex));
+#elif PORT(FREE_RTOS)
+  xSemaphoreHandle xSem = (xSemaphoreHandle)mutex;
+  vSemaphoreDelete(xSem);
+#endif
+}
 
 void
-util_task_yield(void)
+NC_P(util_task_yield)(void)
 {
+#if PORT(FREE_RTOS)
+  vPortYield();
+#endif
 }

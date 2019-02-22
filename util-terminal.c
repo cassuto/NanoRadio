@@ -89,7 +89,7 @@ ws_puts (                    /* Put a string to the default device */
 
 static
 void
-ws_xvprintf( const char* fmt, va_list arp )
+NC_P(ws_xvprintf)( const char* fmt, va_list arp )
 {
   unsigned int r, i, j, w, f;
   char s[24], c, d, *p;
@@ -219,7 +219,7 @@ ws_xvprintf( const char* fmt, va_list arp )
  * @param ... Optional arguments
  */
 void
-ws_printf( const char* fmt, ... )
+NC_P(ws_printf)( const char* fmt, ... )
 {
   va_list arp;
 
@@ -234,7 +234,7 @@ ws_printf( const char* fmt, ... )
  * @param ... Optional arguments
  */
 void
-ws_xsprintf( char* buff, const char* fmt, ... )
+NC_P(ws_xsprintf)( char* buff, const char* fmt, ... )
 {
   va_list arp;
 
@@ -252,7 +252,7 @@ ws_xsprintf( char* buff, const char* fmt, ... )
 
 /** Dump a line of binary dump */
 void
-put_dump (
+NC_P(put_dump) (
   const void* buff,       /* Pointer to the array to be dumped */
   unsigned long addr,     /* Heading address value */
   int len,                /* Number of items to be dumped */

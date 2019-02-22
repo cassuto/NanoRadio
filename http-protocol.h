@@ -17,7 +17,7 @@
 #include "tcp-socket.h"
 
 typedef struct {
-  char buff[1024]; /* a frame of HTTP header */
+  char buff[4]; /* a frame of HTTP header */
   int content_lenght;
   int content_read_lenght;
   char chunked;
@@ -32,11 +32,11 @@ typedef struct {
   int (*event_content_type)(char *at, int length);
 } http_event_procs_t;
 
-void http_callbacks_init(http_event_procs_t *procs);
-void http_reset(http_t *http);
-int http_request(http_t *http, const char *host, const char *file, int port, int start, int end);
-int http_read_response(http_t *http, const http_event_procs_t *event_procs);
+void NC_P(http_callbacks_init)(http_event_procs_t *procs);
+void NC_P(http_reset)(http_t *http);
+int NC_P(http_request)(http_t *http, const char *host, const char *file, int port, int start, int end);
+int NC_P(http_read_response)(http_t *http, const http_event_procs_t *event_procs);
 
-int parse_url(char *url, const char **pproto, const char **phost, const char **pfile, int *pport);
+int NC_P(parse_url)(char *url, const char **pproto, const char **phost, const char **pfile, int *pport);
 
 #endif

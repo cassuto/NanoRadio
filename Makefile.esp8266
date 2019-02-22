@@ -1,0 +1,14 @@
+.PHONY: all clean
+
+COMPILE ?= gcc
+BOOT ?= new
+APP ?= 1
+SPI_SPEED ?= 40
+SPI_MODE ?= DOUT
+SPI_SIZE ?= 4096
+
+all:
+	make -C ./bsp-esp8266/nano-radio COMPILE=$(COMPILE) BOOT=$(BOOT) APP=$(APP) SPI_SPEED=$(SPI_SPEED) SPI_MODE=$(SPI_MODE) SPI_SIZE=$(SPI_SIZE)
+
+clean:
+	make -C ./bsp-esp8266/nano-radio clean

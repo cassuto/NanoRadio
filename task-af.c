@@ -12,6 +12,7 @@
  *  Lesser General Public License for more details.
  */
 
+#include "portable.h"
 #include "af-buffer.h"
 #include "af-interface.h"
 #include "af-codec.h"
@@ -32,18 +33,18 @@ static volatile int audio_error; /* non-atomic, not for accurate controling */
 static volatile stream_type_t stream_type;
 
 static int
-create_audio_mainloop_task(void)
+NC_P(create_audio_mainloop_task)(void)
 {
   pfn_util_task_callback task_func;
   uint16_t stack_depth;
 
   switch(stream_type)
     {
+#if 0
       case STREAM_MPEG:
         task_func = task_mpeg_decode;
         stack_depth = 8448;
         break;
-#if 0
       case STREAM_MP4:
         task_func = libfaac_decoder_task;
         stack_depth = 55000;
@@ -60,7 +61,7 @@ create_audio_mainloop_task(void)
     }
 
   audio_running = 1;
-  if( util_create_task(task_func, stack_depth, CORE_CODEC, NULL) )
+  if( util_create_task(task_func, "aud_dec", stack_depth, CORE_CODEC, NULL) )
     {
       trace_error(("creating decoder task\n"));
       return -WERR_FAILED;
@@ -72,13 +73,13 @@ create_audio_mainloop_task(void)
 }
 
 static int
-event_redirect(char *url)
+NC_P(event_redirect)(char *url)
 {
   return 0; /* todo */
 }
 
 static int
-event_content_type(char *at, int length)
+NC_P(event_content_type)(char *at, int length)
 {
   if (strstr(at, "application/octet-stream"))
     stream_type = STREAM_OCTET;
@@ -96,7 +97,7 @@ event_content_type(char *at, int length)
 }
 
 static int
-event_body(char *at, int length)
+NC_P(event_body)(char *at, int length)
 {
   audio_buffer_write( at, length );
   if( audio_status == AUDIO_IDLE )
@@ -107,7 +108,7 @@ event_body(char *at, int length)
 }
 
 static void
-task_audio_http_connect(void *opaque)
+NC_P(task_audio_http_connect)(void *opaque)
 {
   http_event_procs_t procs =
     {
@@ -122,20 +123,20 @@ task_audio_http_connect(void *opaque)
 }
 
 int
-task_audio_open(const char *host, const char *file, int port)
+NC_P(task_audio_open)(const char *host, const char *file, int port)
 {
   if( audio_status == AUDIO_IDLE )
     {
       int rc;
       if( (rc = http_request(&stream_http, host, file, port, -1, -1)) )
         return rc;
-      return util_create_task(task_audio_http_connect, 2048, CORE_CODEC, NULL);
+      return util_create_task(task_audio_http_connect, "aud_conn", 2048, CORE_CODEC, NULL);
     }
   return -WERR_BUSY;
 }
 
 int
-task_audio_init(void)
+NC_P(task_audio_init)(void)
 {
   if( (adif_instance = adif_init(ADIF_RT)) )
     {

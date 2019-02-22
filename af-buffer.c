@@ -29,7 +29,7 @@ static long buf_overflow_count, buf_underflow_count;
 #if ENABLE(INNER_SRAM_BUFF)
 #undef SPIRAMSIZE
 
-#define SPIRAMSIZE 32000
+#define SPIRAMSIZE 4 //32000
   static char buffer[SPIRAMSIZE]; /* Utilize SRAM built in SoC */
 # define spi_ram_init() while(0)
 # define spi_ram_test() 1
@@ -38,7 +38,7 @@ static long buf_overflow_count, buf_underflow_count;
 #endif
 
 int
-audio_buffer_init(void)
+NC_P(audio_buffer_init)(void)
 {
   buf_read_pos = 0;
   buf_write_pos = 0;
@@ -55,7 +55,7 @@ audio_buffer_init(void)
 }
 
 void
-audio_buffer_reset(void)
+NC_P(audio_buffer_reset)(void)
 {
   util_mutex_take(mux);
   buf_read_pos = 0;
@@ -69,7 +69,7 @@ audio_buffer_reset(void)
 }
 
 void
-audio_buffer_read(char *buff, int len)
+NC_P(audio_buffer_read)(char *buff, int len)
 {
   int n;
   while (len > 0)
@@ -104,7 +104,7 @@ audio_buffer_read(char *buff, int len)
 }
 
 void
-audio_buffer_write(const char *buff, int buffLen)
+NC_P(audio_buffer_write)(const char *buff, int buffLen)
 {
   int n;
   while (buffLen > 0)
@@ -142,7 +142,7 @@ audio_buffer_write(const char *buff, int buffLen)
 
 /* get amount of bytes in use */
 int
-audio_buffer_fill(void)
+NC_P(audio_buffer_fill)(void)
 {
   int ret;
   util_mutex_take(mux);
@@ -153,15 +153,15 @@ audio_buffer_fill(void)
 
 /* get amount of bytes free */
 int
-audio_buffer_free(void)
+NC_P(audio_buffer_free)(void)
 { return (SPIRAMSIZE-audio_buffer_fill()); }
 
 int
-audio_buffer_size(void)
+NC_P(audio_buffer_size)(void)
 { return SPIRAMSIZE; }
 
 long
-audio_buffer_get_overflow(void)
+NC_P(audio_buffer_get_overflow)(void)
 {
   long ret;
   util_mutex_take(mux);
@@ -171,7 +171,7 @@ audio_buffer_get_overflow(void)
 }
 
 long
-audio_buffer_get_underflow(void)
+NC_P(audio_buffer_get_underflow)(void)
 {
   long ret;
   util_mutex_take(mux);

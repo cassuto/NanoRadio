@@ -18,15 +18,32 @@
 /*
  * Configuration definitions
  */
-#define USING_PORT_POSIX 1
-#define USING_PORT_SOCKET 1
-/* #undef USING_PORT_SOCKET */
+/* #define USING_PORT_POSIX 1 */
+#undef USING_PORT_POSIX
+
+#define USING_PORT_ESP8266 1
+/* #undef USING_PORT_ESP8266 */
+
+/* #define USING_PORT_SOCKET 1 */
+#undef USING_PORT_SOCKET
+
+#define USING_PORT_LWIP 1
+/* #undef USING_PORT_LWIP */
+
+/* #define USING_PORT_WINSOCK2 1 */
+#undef USING_PORT_WINSOCK2
+
+/* #define USING_MBEDTLS 1 */
+#undef USING_MBEDTLS
+
+#define USING_SSL 1
+/* #undef USING_SSL */
+
 /* #define USING_PORT_FREE_RTOS 1 */
 #undef USING_PORT_FREE_RTOS
+
 #define ENABLE_INNER_SRAM_BUFF 1
 /* #undef ENABLE_INNER_SRAM_BUFF */
-/*#define ENABLE_BSS_ALIGN 1 */
-#undef ENABLE_BSS_ALIGN
 
 #define SPIREADSIZE 64
 
@@ -34,19 +51,47 @@
 
 #define CHUNK_SIZE 8192
 
+#ifdef USING_PORT_ESP8266
+# define ENABLE_BSS_ALIGN 1
+#else
+# undef ENABLE_BSS_ALIGN
+#endif
+
 #define PORT(type)  (defined USING_PORT_##type && USING_PORT_##type)
 
 #define ENABLE(type)  (defined ENABLE_##type && ENABLE_##type)
 
+#define USING(type)  (defined USING_##type && USING_##type)
+
+
 /*
  * Platform-relative macros
  */
+#if PORT(ESP8266)
+# include "esp_common.h"
+
+/*
+ * GCC doesn't provide an appropriate macro for [u]intptr_t
+ * For now, use __PTRDIFF_TYPE__
+ */
+#if defined(__PTRDIFF_TYPE__)
+typedef signed __PTRDIFF_TYPE__ intptr_t;
+typedef unsigned __PTRDIFF_TYPE__ uintptr_t;
+#else
+/*
+ * Fallback to hardcoded values, 
+ * should be valid on cpu's with 32bit int/32bit void*
+ */
+typedef signed long intptr_t;
+typedef unsigned long uintptr_t;
+#endif
+
+#endif
+
 #ifndef ICACHE_FLASH_ATTR
 # define ICACHE_FLASH_ATTR
 #endif
 #define NC_P(p) ICACHE_FLASH_ATTR p
-
-#ifndef NO_RTL
 
 /*
  * Memory management helper functions
@@ -60,14 +105,6 @@
 #ifndef ws_bzero
 # define ws_bzero( /* void * */ dst, /* size_t */ size ) ws_memset((dst), 0, (size))
 #endif
-
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
 
 static inline char *ws_strdup( const char *src )
 {
@@ -86,7 +123,6 @@ static inline char *ws_strndup( const char *src, size_t len )
   memcpy( mem, src, len );
   return mem;
 }
-#endif
 
 #define WS_UNUSED(x) ((void)x)
 
@@ -110,3 +146,15 @@ static inline char *ws_strndup( const char *src, size_t len )
 #define WERR_BUFFER_OVERFLOW (13)
 
 #endif //!defined(PORTABLE_H_)
+
+#ifndef NO_RTL
+# include <stdarg.h>
+# include <stdlib.h>
+# include <stdio.h>
+# include <string.h>
+# include <ctype.h>
+# if ! PORT(ESP8266)
+#  include <stdint.h>
+#  include <errno.h>
+# endif
+#endif

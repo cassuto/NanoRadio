@@ -22,10 +22,10 @@ typedef struct {
 #define ADIF_RT 1   /* RtAudio */
 #define ADIF_I2S 2  /* I2S output Device */
 
-extern const adif_t *adif_init(int adif_index);
-extern void adif_uninit(const adif_t *adif);
-extern int adif_config(const adif_t *adif, const adif_format_t *format);
-extern unsigned adif_write(const adif_t *adif, const void *buff, unsigned size);
+extern const adif_t *NC_P(adif_init)(int adif_index);
+extern void NC_P(adif_uninit)(const adif_t *adif);
+extern int NC_P(adif_config)(const adif_t *adif, const adif_format_t *format);
+extern unsigned NC_P(adif_write)(const adif_t *adif, const void *buff, unsigned size);
 
 extern const adif_t *adif_instance;
 

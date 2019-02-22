@@ -1,0 +1,66 @@
+
+CC ?= gcc
+CXX ?= g++
+CFLAGS += -g -Wall -Wno-unused-function -Wno-unused-but-set-variable -I./ -DNANORADIO
+CFLAGS_CODEC_MPEG = $(CFLAGS) -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Wno-unused-label -Wno-return-type -Wno-missing-braces -Wno-pointer-sign -Wno-parentheses
+CFLAGS_ADIF_RTAUDIO = $(CFLAGS) -Wno-unused-variable -D__WINDOWS_DS__
+
+LDFLAGS += -g -lmbedtls -lmbedcrypto -ldsound -lole32 -lwinmm -lpthread
+
+#########################################################################
+# Targets.
+
+OBJS += main.o \
+        util-logtrace.o \
+        util-terminal.o \
+        util-task.o \
+        json-parser.o \
+        tcp-socket.o \
+        http-protocol.o \
+        af-interface.o \
+        af-buffer.o \
+        task-af.o \
+        task-controls.o \
+        xapi.o \
+        xapi-nanoradio.o \
+#        xapi-openweathermap.o \
+#        xapi-rss.o \
+
+        
+OBJS += codec-mpeg/align.o \
+        codec-mpeg/decoder.o \
+        codec-mpeg/frame.o \
+        codec-mpeg/layer12.o \
+        codec-mpeg/stream.o \
+        codec-mpeg/timer.o \
+        codec-mpeg/bit.o  \
+        codec-mpeg/fixed.o \
+        codec-mpeg/huffman.o \
+        codec-mpeg/layer3.o \
+        codec-mpeg/synth_stereo.o \
+        codec-mpeg/version.o \
+        codec-mpeg/codec-mpeg.o
+        
+OBJS += adif-rt/RtAudio.o \
+        adif-rt/adif-rt.o
+
+.PHONY: all clean
+
+all: webradio
+
+clean:
+	rm $(OBJS)
+  
+webradio: $(OBJS)
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) $< -o $@
+
+codec-mpeg/%.o: codec-mpeg/%.c
+	$(CC) -c $(CFLAGS_CODEC_MPEG) $< -o $@
+
+adif-rt/%.o: adif-rt/%.c
+	$(CC) -c $(CFLAGS_ADIF_RTAUDIO) $< -o $@
+adif-rt/%.o: adif-rt/%.cpp
+	$(CXX) -c $(CFLAGS_ADIF_RTAUDIO) $< -o $@

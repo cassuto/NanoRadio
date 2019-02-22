@@ -1,5 +1,5 @@
 /*
- *  WebClock (Open source IoT hardware)
+ *  NanoRadio (Open source IoT hardware)
  *
  *  This project is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License(GPL)
@@ -12,7 +12,7 @@
  *  Lesser General Public License for more details.
  */
 
-#define TRACE_UNIT "adcd"
+#define TRACE_UNIT "cdmpg"
 
 #include "util-logtrace.h"
 #include "af-interface.h"

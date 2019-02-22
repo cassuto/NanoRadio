@@ -15,16 +15,32 @@
 #include "af-interface.h"
 
 static adif_format_t adif_format;
+#if defined(USING_ADIF_RT)
 extern adif_t adif_rt;
+#endif
+#if defined(USING_ADIF_ESP_I2S)
+extern adif_t adif_esp_i2s;
+#endif
+#if defined(USING_ADIF_ESP_I2S_DSM)
+extern adif_t adif_esp_i2s_dsm;
+#endif
 
 static const adif_t *adifs[] =
   {
+#if defined(USING_ADIF_RT)
     &adif_rt,
+#endif
+#if defined(USING_ADIF_ESP_I2S)
+    &adif_esp_i2s,
+#endif
+#if defined(USING_ADIF_ESP_I2S_DSM)
+    &adif_esp_i2s_dsm,
+#endif
     NULL
   };
 
 const adif_t *
-adif_init(int adif_index)
+NC_P(adif_init)(int adif_index)
 {
   int i;
   const adif_t *adif;
@@ -39,13 +55,13 @@ adif_init(int adif_index)
 }
 
 void
-adif_uninit(const adif_t *adif)
+NC_P(adif_uninit)(const adif_t *adif)
 {
   adif->uninit(0);
 }
 
 int
-adif_config(const adif_t *adif, const adif_format_t *format)
+NC_P(adif_config)(const adif_t *adif, const adif_format_t *format)
 {
   if( adif_format.sample_rate != format->sample_rate ||
       adif_format.bit_depth != format->bit_depth ||
@@ -58,7 +74,7 @@ adif_config(const adif_t *adif, const adif_format_t *format)
 }
 
 unsigned
-adif_write(const adif_t *adif, const void *buff, unsigned size)
+NC_P(adif_write)(const adif_t *adif, const void *buff, unsigned size)
 {
   return adif->write(buff, size, 0);
 }
