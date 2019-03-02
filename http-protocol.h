@@ -17,7 +17,7 @@
 #include "tcp-socket.h"
 
 typedef struct {
-  char buff[4]; /* a frame of HTTP header */
+  char buff[512]; /* a frame of HTTP header */
   int content_lenght;
   int content_read_lenght;
   char chunked;

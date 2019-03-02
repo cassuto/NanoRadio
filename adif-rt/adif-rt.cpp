@@ -33,7 +33,7 @@ static volatile int write_pos;
 
 
 extern "C" int
-ADIF_CB(adif_rt_init)(int opaque)
+ADIF_P(adif_rt_init)(int opaque)
 { WS_UNUSED(opaque);
   if( audio ) delete audio;
   audio = new RtAudio;
@@ -57,7 +57,7 @@ ADIF_CB(adif_rt_init)(int opaque)
 }
 
 extern "C" void
-ADIF_CB(adif_rt_uninit)(int opaque)
+ADIF_P(adif_rt_uninit)(int opaque)
 { WS_UNUSED(opaque);
   if ( audio->isStreamOpen() ) audio->closeStream();
   delete audio;
@@ -115,7 +115,7 @@ static int rt_read_samples( void *voutputBuffer, void *inputBuffer, unsigned int
 }
 
 extern "C" int
-ADIF_CB(adif_rt_config)(const adif_format_t *format, int opaque)
+ADIF_P(adif_rt_config)(const adif_format_t *format, int opaque)
 { WS_UNUSED(opaque);
 
   if( audio->isStreamOpen() ) audio->closeStream();
@@ -145,7 +145,7 @@ ADIF_CB(adif_rt_config)(const adif_format_t *format, int opaque)
 }
 
 extern "C" unsigned
-ADIF_CB(adif_rt_write)(const void *buff, unsigned size, int opaque)
+ADIF_P(adif_rt_write)(const void *buff, unsigned size, int opaque)
 { WS_UNUSED(opaque);
 
   const char *data = (const char *)buff;

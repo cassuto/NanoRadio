@@ -39,8 +39,12 @@
 #define USING_SSL 1
 /* #undef USING_SSL */
 
-/* #define USING_PORT_FREE_RTOS 1 */
-#undef USING_PORT_FREE_RTOS
+#define USING_PORT_FREE_RTOS 1
+/* #undef USING_PORT_FREE_RTOS */
+
+#define USING_ADIF_ESP_I2S_DSM 1
+/* #undef USING_ADIF_ESP_I2S_DSM */
+
 
 #define ENABLE_INNER_SRAM_BUFF 1
 /* #undef ENABLE_INNER_SRAM_BUFF */

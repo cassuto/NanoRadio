@@ -228,6 +228,7 @@ NC_P(http_read_response)(http_t *http, const http_event_procs_t *event_procs)
   const char *response = http->buff;
   char *body;
   char *at;
+  char trunc = 0;
   int block_length = 0;
   char stream_eof = 0;
 
@@ -236,7 +237,6 @@ NC_P(http_read_response)(http_t *http, const http_event_procs_t *event_procs)
       if( len <= 0 ) break;
       pos += len;
     }
-  
   if(!pos) return -WERR_TCP_RECV;
   
   while(isspace(*response)) response++;
@@ -266,7 +266,7 @@ NC_P(http_read_response)(http_t *http, const http_event_procs_t *event_procs)
     default:
       return status;
   }
-
+  
   http->content_lenght = http_atoi( get_http_field(http->buff, "Content-Length:", &at), 10 );
   field_value = get_http_field(http->buff, "Content-Type", &at);
   event_procs->event_content_type(field_value, (int)(at - field_value));
@@ -280,7 +280,10 @@ NC_P(http_read_response)(http_t *http, const http_event_procs_t *event_procs)
   
   body = strstr(http->buff, "\r\n\r\n");
   if(!body)
-    return -WERR_HTTP_HEADER;
+    {
+      trace_debug(("http hdr trunc\n")); /* http header was truncated! */
+      return -WERR_HTTP_HEADER;
+    }
   body += 4;
   
   http->write_pos = 0;
@@ -298,7 +301,7 @@ NC_P(http_read_response)(http_t *http, const http_event_procs_t *event_procs)
   http->write_pos = len;
   http->content_read_lenght = 0;
   at = http->buff;
-  
+
   for(;;)
     {
       char *p = http->buff, *pend = http->buff + (http->write_pos - 1);

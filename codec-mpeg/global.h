@@ -22,7 +22,7 @@
 # ifndef LIBMAD_GLOBAL_H
 # define LIBMAD_GLOBAL_H
 
-// #include "esp_common.h"
+#include "esp_common.h"
 #include "config.h"
 /* conditional debugging */
 

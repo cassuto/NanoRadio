@@ -29,7 +29,7 @@ static long buf_overflow_count, buf_underflow_count;
 #if ENABLE(INNER_SRAM_BUFF)
 #undef SPIRAMSIZE
 
-#define SPIRAMSIZE 4 //32000
+#define SPIRAMSIZE 4096
   static char buffer[SPIRAMSIZE]; /* Utilize SRAM built in SoC */
 # define spi_ram_init() while(0)
 # define spi_ram_test() 1

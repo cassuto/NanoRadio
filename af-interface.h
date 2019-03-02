@@ -3,6 +3,7 @@
 
 #include "portable.h"
 
+#define ADIF_P(x) NC_P(x)
 #define ADIF_CB(x) x
 
 typedef struct {
@@ -19,8 +20,9 @@ typedef struct {
   unsigned ADIF_CB((*write))(const void *buff, unsigned size, int opaque);
 } adif_t;
 
-#define ADIF_RT 1   /* RtAudio */
-#define ADIF_I2S 2  /* I2S output Device */
+#define ADIF_RT 1           /* RtAudio */
+#define ADIF_ESP_I2S 2      /* ESP SoC I2S output Device */
+#define ADIF_ESP_I2S_DSM 3  /* ESP SoC I2S Delta-Sigame output Device */
 
 extern const adif_t *NC_P(adif_init)(int adif_index);
 extern void NC_P(adif_uninit)(const adif_t *adif);

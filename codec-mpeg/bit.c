@@ -32,7 +32,6 @@
 # endif
 
 # include "bit.h"
-#include "align.h"
 
 /*
  * This is the lookup table for computing the CRC-check word.
@@ -42,7 +41,7 @@
  * G(X) = X^16 + X^15 + X^2 + 1
  */
 static
-unsigned short const crc_table[256] = {
+unsigned short const ICACHE_RODATA_ATTR crc_table[256] = {
   0x0000, 0x8005, 0x800f, 0x000a, 0x801b, 0x001e, 0x0014, 0x8011,
   0x8033, 0x0036, 0x003c, 0x8039, 0x0028, 0x802d, 0x8027, 0x0022,
   0x8063, 0x0066, 0x006c, 0x8069, 0x0078, 0x807d, 0x8077, 0x0072,

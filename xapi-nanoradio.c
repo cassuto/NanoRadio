@@ -28,10 +28,10 @@ static const char *api_channel_entry = "/api/channel/entry.%d.%d";
 static const char *api_program_info = "/api/program/info.%d.%d";
 static const char *api_program_list = "/api/program/list.%d.%d.%d";
 
-#define NANORADIO_API_CHUNK 4 //4 * 1024
+#define NANORADIO_API_CHUNK 4 * 1024
 
 static char api_chunk[NANORADIO_API_CHUNK+1];
-static char api_buff[4/*512*/];
+static char api_buff[512];
 static int api_chunk_write_pos;
 static int api_parsing_pos;
 

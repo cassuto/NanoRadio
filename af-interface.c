@@ -50,6 +50,7 @@ NC_P(adif_init)(int adif_index)
         break;
     }
   
+  if( !adif ) return NULL;
   if( !adif->init(0) ) return adif;
   return NULL;
 }

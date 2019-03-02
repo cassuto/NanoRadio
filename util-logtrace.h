@@ -14,6 +14,8 @@
 #ifndef UTIL_LOGTRACE_H_
 #define UTIL_LOGTRACE_H_
 
+#include "portable.h"
+
 #ifndef TRACE_UNIT
 # define TRACE_UNIT 0
 #endif
@@ -33,7 +35,11 @@ typedef enum ws_log_level_e
 void ws_log_init( void );
 void ws_log_set_unit( const char *unitname, const char *filename, int line );
 void ws_log_set_level( ws_log_level_t level );
+//#if PORT(POSIX)
 void ws_log_trace( const char *format, ... );
+//#else
+//# define ws_log_trace printf
+//#endif
 
 void ws_panic( int rc );
 

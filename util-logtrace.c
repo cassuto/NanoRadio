@@ -68,23 +68,24 @@ NC_P(ws_log_set_level)( ws_log_level_t level )
   log_level = level;
 }
 
+//#if PORT(POSIX)
 void
 NC_P(ws_log_trace)( const char *format, ... )
 {
-#if PORT(POSIX)
   char buff[1024];
   va_list args;
   va_start (args, format);
 
-  vsnprintf(buff, sizeof(buff), format, args);
+  //vsprintf(buff, sizeof(buff), format, args);
   va_end(args);
 
-  if( log_level == LOG_PANIC )
+  /*if( log_level == LOG_PANIC )
     log_printf( "Panic! in %s: %d\n", log_unit_filename, log_unit_line );
 
-  log_printf( "[%s] %s", log_unit_name, buff );
-#endif
+  log_printf( "[%s] %s", log_unit_name, buff );*/
+  printf(format);
 }
+//#endif
 
 void
 NC_P(ws_panic)( int rc )

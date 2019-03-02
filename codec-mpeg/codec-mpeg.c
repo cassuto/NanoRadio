@@ -24,11 +24,11 @@
 #include "frame.h"
 #include "synth.h"
 
-// The theoretical maximum frame size is 2881 bytes,
-// MPEG 2.5 Layer II, 8000 Hz @ 160 kbps, with a padding slot plus 8 byte MAD_BUFFER_GUARD.
+/* The theoretical maximum frame size is 2881 bytes,
+   MPEG 2.5 Layer II, 8000 Hz @ 160 kbps, with a padding slot plus 8 byte MAD_BUFFER_GUARD. */
 #define MAX_FRAME_SIZE (2889)
 
-// The theoretical minimum frame size of 24 plus 8 byte MAD_BUFFER_GUARD.
+/* The theoretical minimum frame size of 24 plus 8 byte MAD_BUFFER_GUARD. */
 #define MIN_FRAME_SIZE (32)
 
 static char mpg_buf[8192];
@@ -50,7 +50,7 @@ error(void *data, struct mad_stream *stream, struct mad_frame *frame)
 }
 
 static enum mad_flow
-decode_input(struct mad_stream *stream){
+NC_P(decode_input)(struct mad_stream *stream){
   size_t remaining = 0;
   
   if (stream->next_frame != 0)
@@ -77,7 +77,7 @@ decode_input(struct mad_stream *stream){
 }
 
 void
-task_mpeg_decode(void *opaque)
+NC_P(task_mpeg_decode)(void *opaque)
 {
     int ret;
     struct mad_stream *stream;
@@ -88,9 +88,9 @@ task_mpeg_decode(void *opaque)
     frame = ws_malloc(sizeof(struct mad_frame));
     synth = ws_malloc(sizeof(struct mad_synth));
 
-    if( !stream ) { trace_error(("malloc(stream) failed\n")); goto err_out; }
-    if( !synth ) { trace_error(("malloc(synth) failed\n")); goto err_out; }
-    if( !frame ) { trace_error(("malloc(frame) failed\n")); goto err_out; }
+    if( !stream ) { trace_error(("m stream\n")); goto err_out; }
+    if( !synth ) { trace_error(("m synth\n")); goto err_out; }
+    if( !frame ) { trace_error(("m frame\n")); goto err_out; }
 
     mad_stream_init(stream);
     mad_frame_init(frame);
@@ -133,7 +133,7 @@ err_out:
 
 /* Called by the NXP modifications of libmad. Sets the needed output sample rate. */
 void
-set_dac_sample_rate(int rate)
+NC_P(set_dac_sample_rate)(int rate)
 {
   buffer_fmt.sample_rate = rate;
 }
@@ -150,7 +150,7 @@ render_send_sample(uint16_t smpl)
 
 /* render callback for the libmad synth */
 void
-render_sample_block(short *sample_buff_ch0, short *sample_buff_ch1, int num_samples, unsigned int num_channels)
+NC_P(render_sample_block)(short *sample_buff_ch0, short *sample_buff_ch1, int num_samples, unsigned int num_channels)
 {
   buffer_fmt.channels = num_channels;
   uint32_t len = num_samples /** sizeof(short) * num_channels*/;

@@ -58,11 +58,25 @@ NC_P(util_create_task)(pfn_util_task_callback callback, const char *name, int st
   param->opaque = opaque;
   
   return pthread_create(&tid, NULL, thread_entry, param);
-  WS_UNUSED(stack_size);
 #elif PORT(FREE_RTOS)
-  if( xTaskCreate(callback, name, 230, opaque, PRIO_READER, NULL) != pdPASS )
-    return -WERR_FAULT;
+  int priority = 1;
+  int rc;
+  switch(coreid)
+    {
+      case CORE_PROTO_STACK:
+        priority = 11; break;
+      case CORE_STREAM:
+        priority = 11; break;
+      case CORE_CODEC:
+        priority = 2; break;
+      case CORE_CTRL:
+        priority = 1; break;
+    }
+  if( xTaskCreate(callback, name, stack_size, opaque, priority, NULL) != pdPASS )
+    return -WERR_FAILED;
   WS_UNUSED(coreid);
+#else
+#error port me!
 #endif
   return 0;
 }
@@ -106,7 +120,7 @@ util_semaphore_take(util_semaphore_t sem)
   return sem_wait((sem_t*)(&sem));
 #elif PORT(FREE_RTOS)
   xSemaphoreHandle xSem = (xSemaphoreHandle)sem;
-  return xSemaphoreTake(xSem);
+  return xSemaphoreTake(xSem, portMAX_DELAY);
 #endif
 }
 
@@ -143,7 +157,7 @@ util_mutex_take(util_mutex_t mutex)
   pthread_mutex_lock((pthread_mutex_t *)(&mutex));
 #elif PORT(FREE_RTOS)
   xSemaphoreHandle xSem = (xSemaphoreHandle)mutex;
-  return xSemaphoreTake(xSem);
+  xSemaphoreTake(xSem, portMAX_DELAY);
 #endif
 }
 
@@ -154,7 +168,7 @@ util_mutex_give(util_mutex_t mutex)
   pthread_mutex_unlock((pthread_mutex_t *)(&mutex));
 #elif PORT(FREE_RTOS)
   xSemaphoreHandle xSem = (xSemaphoreHandle)mutex;
-  return xSemaphoreGive(xSem);
+  xSemaphoreGive(xSem);
 #endif
 }
 
@@ -175,4 +189,18 @@ NC_P(util_task_yield)(void)
 #if PORT(FREE_RTOS)
   vPortYield();
 #endif
+}
+
+void
+NC_P(util_task_sleep)(int ms)
+{
+#if PORT(FREE_RTOS)
+  vTaskDelay(ms / portTICK_RATE_MS);
+#endif
+}
+
+int
+NC_P(util_task_get_free_heap)(void)
+{
+  return xPortGetFreeHeapSize();
 }

@@ -40,11 +40,11 @@ NC_P(create_audio_mainloop_task)(void)
 
   switch(stream_type)
     {
-#if 0
       case STREAM_MPEG:
         task_func = task_mpeg_decode;
-        stack_depth = 8448;
+        stack_depth = 2100;
         break;
+#if 0
       case STREAM_MP4:
         task_func = libfaac_decoder_task;
         stack_depth = 55000;
@@ -61,14 +61,14 @@ NC_P(create_audio_mainloop_task)(void)
     }
 
   audio_running = 1;
+  audio_status = AUDIO_DECODING;
   if( util_create_task(task_func, "aud_dec", stack_depth, CORE_CODEC, NULL) )
     {
       trace_error(("creating decoder task\n"));
       return -WERR_FAILED;
     }
-  audio_status = AUDIO_DECODING;
 
-  trace_debug(("created decoder task: %d\n", stream_type));
+  trace_debug(("created decoder task: %d, %dB\n", stream_type, util_task_get_free_heap()));
   return 0;
 }
 
@@ -116,6 +116,7 @@ NC_P(task_audio_http_connect)(void *opaque)
       .event_redirect = event_redirect,
       .event_content_type = event_content_type
     };
+
   audio_error = http_read_response(&stream_http, &procs);
 
   util_task_exit();
@@ -127,10 +128,21 @@ NC_P(task_audio_open)(const char *host, const char *file, int port)
 {
   if( audio_status == AUDIO_IDLE )
     {
-      int rc;
-      if( (rc = http_request(&stream_http, host, file, port, -1, -1)) )
-        return rc;
-      return util_create_task(task_audio_http_connect, "aud_conn", 2048, CORE_CODEC, NULL);
+      for(;;)
+        {
+          int rc = http_request(&stream_http, host, file, port, -1, -1);
+          if(rc == -WERR_CONN_FATAL)
+            {
+              trace_debug(("retry\n"));
+              util_task_sleep(500);
+              continue;
+            }
+          else if (!rc)
+            break;
+          else
+            return rc;
+        }
+      return util_create_task(task_audio_http_connect, "aud_conn", 200, CORE_STREAM, NULL);
     }
   return -WERR_BUSY;
 }

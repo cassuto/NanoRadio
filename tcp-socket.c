@@ -193,8 +193,8 @@ NC_P(ws_socket_conn)(tcp_socket_t *tsock, const char *host, int port, int retry)
           host_dispname = host;
     #endif
 
-          trace_info (("connecting to server %s...\n", host_dispname));
-          if( connect(tsock->fd, (struct sockaddr *)(&remote_ip), sizeof(struct sockaddr))!=00 )
+          //trace_info (("connecting to server %s...\n", host_dispname));
+          if( connect(tsock->fd, (struct sockaddr *)(&remote_ip), sizeof(struct sockaddr))!=0 )
             {
               closesocket(tsock->fd);
               trace_info (("connection failed\n"));
